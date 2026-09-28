@@ -1,4 +1,4 @@
-package com.children_activities.entity;
+package auth.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
