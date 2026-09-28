@@ -1,6 +1,6 @@
-package auth.entity;
-import auth.entity.Activity;
-import auth.entity.Child;
+package submissions.entity;
+import activities.entity.Activity;
+import children.entity.Child;
 
 import jakarta.persistence.*;
 import lombok.*;
