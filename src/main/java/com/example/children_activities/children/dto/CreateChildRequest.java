@@ -1,0 +1,11 @@
+package com.example.children_activities.children.dto;
+
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
+
+public record CreateChildRequest (
+        @NotBlank(message = "Name is required")
+        @Size(max = 100, message = "Name must be at most 100 characters")
+        String name
+) {
+}

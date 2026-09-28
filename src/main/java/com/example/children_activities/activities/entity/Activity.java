@@ -1,5 +1,5 @@
-package activities.entity;
-import subjects.entity.Subject;
+package com.example.children_activities.activities.entity;
+import com.example.children_activities.subjects.entity.Subject;
 
 import jakarta.persistence.*;
 import lombok.*;
@@ -22,7 +22,7 @@ public class Activity {
     private UUID id;
 
     @Column(nullable = false, length = 100)
-    private String tittle;
+    private String title;
 
     @Column(nullable = false)
     private LocalDate activityDate;
@@ -32,7 +32,7 @@ public class Activity {
     private Subject subject;
 
     @Column(nullable = false)
-    private boolean activated;
+    private boolean active;
 
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;

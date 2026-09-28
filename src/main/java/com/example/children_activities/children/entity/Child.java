@@ -1,4 +1,4 @@
-package auth.entity;
+package com.example.children_activities.children.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
@@ -6,14 +6,15 @@ import lombok.*;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+
 @Entity
-@Table(name = "users")
+@Table(name = "children")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class User {
+public class Child {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -22,11 +23,8 @@ public class User {
     @Column(nullable = false, length = 100)
     private String name;
 
-    @Column(nullable = false, unique = true, length = 150)
-    private String email;
-
-    @Column(nullable = false)
-    private String passwordHash;
+    @Column(nullable = false, unique = true, length = 20)
+    private String code;
 
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;

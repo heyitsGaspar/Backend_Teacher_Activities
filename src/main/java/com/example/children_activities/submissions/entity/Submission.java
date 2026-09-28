@@ -1,6 +1,6 @@
-package submissions.entity;
-import activities.entity.Activity;
-import children.entity.Child;
+package com.example.children_activities.submissions.entity;
+import com.example.children_activities.activities.entity.Activity;
+import com.example.children_activities.children.entity.Child;
 
 import jakarta.persistence.*;
 import lombok.*;
