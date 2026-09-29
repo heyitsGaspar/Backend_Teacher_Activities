@@ -4,6 +4,8 @@ import com.example.children_activities.activities.dto.ActivityResponse;
 import com.example.children_activities.activities.dto.CreateActivityRequest;
 import com.example.children_activities.activities.entity.Activity;
 import com.example.children_activities.activities.repository.ActivityRepository;
+import com.example.children_activities.exception.ActivityNotFoundException;
+import com.example.children_activities.exception.SubjectNotFoundException;
 import com.example.children_activities.subjects.entity.Subject;
 import com.example.children_activities.subjects.repository.SubjectRepository;
 import org.springframework.stereotype.Service;
@@ -31,7 +33,7 @@ public class ActivityService {
 
         Subject subject = subjectRepository.findById(request.subjectId())
                 .orElseThrow(() ->
-                        new RuntimeException("Asignatura no encontrada")
+                        new SubjectNotFoundException("Asignatura no encontrada")
                 );
 
         Activity activity = Activity.builder()
@@ -60,7 +62,7 @@ public class ActivityService {
 
         Activity activity = activityRepository.findById(id)
                 .orElseThrow(() ->
-                        new RuntimeException("Actividad no encontrada")
+                        new ActivityNotFoundException("Actividad no encontrada")
                 );
 
         return ActivityResponse.fromEntity(activity);
@@ -74,12 +76,12 @@ public class ActivityService {
 
         Activity activity = activityRepository.findById(id)
                 .orElseThrow(() ->
-                        new RuntimeException("Actividad no encontrada")
+                        new ActivityNotFoundException("Actividad no encontrada")
                 );
 
         Subject subject = subjectRepository.findById(request.subjectId())
                 .orElseThrow(() ->
-                        new RuntimeException("Asignatura no encontrada")
+                        new ActivityNotFoundException("Asignatura no encontrada")
                 );
 
         activity.setSubject(subject);
@@ -96,7 +98,7 @@ public class ActivityService {
 
         Activity activity = activityRepository.findById(id)
                 .orElseThrow(() ->
-                        new RuntimeException("Actividad no encontrada")
+                        new ActivityNotFoundException("Actividad no encontrada")
                 );
 
         activityRepository.delete(activity);
@@ -107,7 +109,7 @@ public class ActivityService {
 
         Activity activity = activityRepository.findById(id)
                 .orElseThrow(() ->
-                        new RuntimeException("Actividad no encontrada")
+                        new ActivityNotFoundException("Actividad no encontrada")
                 );
 
         activityRepository.findByActiveTrue()

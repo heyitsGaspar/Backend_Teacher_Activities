@@ -4,6 +4,10 @@ import com.example.children_activities.activities.entity.Activity;
 import com.example.children_activities.activities.repository.ActivityRepository;
 import com.example.children_activities.children.entity.Child;
 import com.example.children_activities.children.repository.ChildRepository;
+import com.example.children_activities.exception.ActivityNotFoundException;
+import com.example.children_activities.exception.ChildNotFoundException;
+import com.example.children_activities.exception.DuplicateSubmissionException;
+import com.example.children_activities.exception.SubmissionNotFoundException;
 import com.example.children_activities.submissions.dto.CreateSubmissionRequest;
 import com.example.children_activities.submissions.dto.SubmissionResponse;
 import com.example.children_activities.submissions.entity.Submission;
@@ -35,12 +39,12 @@ public class SubmissionService {
 
         Child child = childRepository.findByCode(request.code())
                 .orElseThrow(() ->
-                        new RuntimeException("Alumno no encontrado")
+                        new ChildNotFoundException("Alumno no encontrado")
                 );
 
         Activity activity = activityRepository.findById(request.activityId())
                 .orElseThrow(() ->
-                        new RuntimeException("Actividad no encontrada")
+                        new ActivityNotFoundException("Actividad no encontrada")
                 );
 
         boolean alreadySubmitted =
@@ -50,7 +54,7 @@ public class SubmissionService {
                 );
 
         if (alreadySubmitted) {
-            throw new RuntimeException(
+            throw new DuplicateSubmissionException(
                     "El alumno ya entregó esta actividad"
             );
         }
@@ -71,7 +75,7 @@ public class SubmissionService {
 
         Submission submission = submissionRepository.findById(id)
                 .orElseThrow(() ->
-                        new RuntimeException("Entrega no encontrada")
+                        new SubmissionNotFoundException("Entrega no encontrada")
                 );
 
         submissionRepository.delete(submission);

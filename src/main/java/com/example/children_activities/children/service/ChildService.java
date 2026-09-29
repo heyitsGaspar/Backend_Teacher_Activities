@@ -4,6 +4,7 @@ import com.example.children_activities.children.dto.ChildResponse;
 import com.example.children_activities.children.dto.CreateChildRequest;
 import com.example.children_activities.children.entity.Child;
 import com.example.children_activities.children.repository.ChildRepository;
+import com.example.children_activities.exception.ChildNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -48,7 +49,7 @@ public class ChildService {
 
         Child child = childRepository.findById(id)
                 .orElseThrow(() ->
-                        new RuntimeException("Alumno no encontrado")
+                        new ChildNotFoundException("Alumno no encontrado")
                 );
 
         return ChildResponse.fromEntity(child);
