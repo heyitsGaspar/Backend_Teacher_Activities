@@ -1,13 +1,17 @@
 package com.example.children_activities.auth.security;
 
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
 public class SecurityConfig {
@@ -27,8 +31,16 @@ public class SecurityConfig {
     }
 
     @Bean
+    public AuthenticationManager authenticationManager(
+            DaoAuthenticationProvider authenticationProvider
+    ) {
+        return new ProviderManager(authenticationProvider);
+    }
+
+    @Bean
     public SecurityFilterChain securityFilterChain(
-            HttpSecurity http
+            HttpSecurity http,
+            JwtAuthenticationFilter jwtAuthenticationFilter
     ) throws Exception {
 
         http
@@ -37,6 +49,17 @@ public class SecurityConfig {
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(
                                 SessionCreationPolicy.STATELESS
+                        )
+                )
+
+                .exceptionHandling(exceptionHandling ->
+                        exceptionHandling.authenticationEntryPoint(
+                                (request, response, authException) -> {
+                                    response.sendError(
+                                            HttpServletResponse.SC_UNAUTHORIZED,
+                                            "Unauthorized"
+                                    );
+                                }
                         )
                 )
 
@@ -56,6 +79,11 @@ public class SecurityConfig {
                                 ).authenticated()
 
                                 .anyRequest().authenticated()
+                )
+
+                .addFilterBefore(
+                        jwtAuthenticationFilter,
+                        UsernamePasswordAuthenticationFilter.class
                 );
 
         return http.build();

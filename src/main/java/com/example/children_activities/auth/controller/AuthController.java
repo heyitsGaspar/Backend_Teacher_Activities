@@ -1,7 +1,9 @@
 package com.example.children_activities.auth.controller;
 
+import com.example.children_activities.auth.dto.AuthResponse;
+import com.example.children_activities.auth.dto.LoginRequest;
+import com.example.children_activities.auth.dto.RefreshTokenRequest;
 import com.example.children_activities.auth.dto.RegisterRequest;
-import com.example.children_activities.auth.dto.RegisterResponse;
 import com.example.children_activities.auth.service.AuthService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -19,9 +21,26 @@ public class AuthController {
 
     @PostMapping("/register")
     @ResponseStatus(HttpStatus.CREATED)
-    public RegisterResponse register(
+    public AuthResponse register(
             @Valid @RequestBody RegisterRequest request
     ) {
         return authService.register(request);
+    }
+
+    @PostMapping("/login")
+    public AuthResponse login(
+            @Valid @RequestBody LoginRequest request
+    ) {
+        return authService.login(request);
+    }
+
+    @PostMapping("/refresh")
+    public AuthResponse refresh(
+            @Valid @RequestBody RefreshTokenRequest request
+    ) {
+
+        return authService.refresh(
+                request.refreshToken()
+        );
     }
 }
