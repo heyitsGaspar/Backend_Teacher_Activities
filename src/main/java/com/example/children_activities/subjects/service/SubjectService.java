@@ -1,5 +1,6 @@
 package com.example.children_activities.subjects.service;
 
+import com.example.children_activities.exception.SubjectNotFoundException;
 import com.example.children_activities.subjects.dto.CreateSubjectRequest;
 import com.example.children_activities.subjects.dto.SubjectResponse;
 import com.example.children_activities.subjects.entity.Subject;
@@ -45,7 +46,7 @@ public class SubjectService {
 
         Subject subject = subjectRepository.findById(id)
                 .orElseThrow(() ->
-                        new RuntimeException("Asignatura no encontrada")
+                        new SubjectNotFoundException("Asignatura no encontrada")
                 );
 
         return SubjectResponse.fromEntity(subject);
@@ -55,7 +56,7 @@ public class SubjectService {
 
         Subject subject = subjectRepository.findById(id)
                 .orElseThrow(() ->
-                        new RuntimeException("Asignatura no encontrada")
+                        new SubjectNotFoundException("Asignatura no encontrada")
                 );
 
         subject.setName(request.name());
@@ -70,7 +71,7 @@ public class SubjectService {
 
         Subject subject = subjectRepository.findById(id)
                 .orElseThrow(() ->
-                        new RuntimeException("Asignatura no encontrada")
+                        new SubjectNotFoundException("Asignatura no encontrada")
                 );
 
         subjectRepository.delete(subject);
