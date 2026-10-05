@@ -1,16 +1,19 @@
 package com.example.children_activities.auth.service;
 
-import com.example.children_activities.auth.dto.*;
+import com.example.children_activities.auth.dto.AuthResponse;
+import com.example.children_activities.auth.dto.LoginRequest;
+import com.example.children_activities.auth.dto.RegisterRequest;
 import com.example.children_activities.auth.entity.User;
 import com.example.children_activities.auth.repository.UserRepository;
 import com.example.children_activities.auth.security.JwtService;
 import com.example.children_activities.exception.EmailAlreadyExistsException;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.UUID;
 
 @Service
 public class AuthService {
@@ -32,38 +35,63 @@ public class AuthService {
         this.jwtService = jwtService;
     }
 
+    /**
+     * Registra un nuevo usuario.
+     *
+     * Después de guardar el usuario se generan
+     * el Access Token y el Refresh Token.
+     */
     @Transactional
     public AuthResponse register(RegisterRequest request) {
 
+        /*
+         * Verificamos que el email no esté registrado.
+         */
         if (userRepository.existsByEmail(request.email())) {
+
             throw new EmailAlreadyExistsException(
                     "El email ya está registrado"
             );
         }
 
+        /*
+         * Encriptamos la contraseña.
+         */
         String passwordHash =
-                passwordEncoder.encode(request.password());
+                passwordEncoder.encode(
+                        request.password()
+                );
 
+        /*
+         * Creamos el usuario.
+         */
         User user = User.builder()
                 .name(request.name())
                 .email(request.email())
                 .passwordHash(passwordHash)
                 .build();
 
-        User savedUser = userRepository.save(user);
+        /*
+         * Guardamos el usuario.
+         *
+         * Aquí Hibernate genera el UUID.
+         */
+        User savedUser =
+                userRepository.save(user);
 
-        UserDetails userDetails =
-                org.springframework.security.core.userdetails.User
-                        .withUsername(savedUser.getEmail())
-                        .password(savedUser.getPasswordHash())
-                        .authorities("USER")
-                        .build();
-
+        /*
+         * Generamos los tokens utilizando
+         * el UUID del usuario.
+         */
         String accessToken =
-                jwtService.generateAccessToken(user);
+                jwtService.generateAccessToken(
+                        savedUser
+                );
 
         String refreshToken =
-                jwtService.generateRefreshToken(user);
+                jwtService.generateRefreshToken(
+                        savedUser
+                );
 
         return new AuthResponse(
                 accessToken,
@@ -71,8 +99,15 @@ public class AuthService {
         );
     }
 
+    /**
+     * Autentica un usuario mediante email
+     * y contraseña.
+     */
     public AuthResponse login(LoginRequest request) {
 
+        /*
+         * Spring Security valida las credenciales.
+         */
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
                         request.email(),
@@ -80,17 +115,22 @@ public class AuthService {
                 )
         );
 
-        User user = userRepository
-                .findByEmail(request.email())
-                .orElseThrow();
+        /*
+         * Obtenemos el usuario mediante su email.
+         */
+        User user =
+                userRepository
+                        .findByEmail(request.email())
+                        .orElseThrow(() ->
+                                new IllegalArgumentException(
+                                        "Usuario no encontrado"
+                                )
+                        );
 
-        UserDetails userDetails =
-                org.springframework.security.core.userdetails.User
-                        .withUsername(user.getEmail())
-                        .password(user.getPasswordHash())
-                        .authorities("USER")
-                        .build();
-
+        /*
+         * Generamos los tokens utilizando
+         * el UUID del usuario.
+         */
         String accessToken =
                 jwtService.generateAccessToken(user);
 
@@ -103,11 +143,15 @@ public class AuthService {
         );
     }
 
+    /**
+     * Genera un nuevo Access Token utilizando
+     * un Refresh Token válido.
+     */
     public AuthResponse refresh(String refreshToken) {
 
         /*
-         * Verificamos que el Refresh Token
-         * sea válido y no haya expirado.
+         * Primero verificamos que el Refresh Token
+         * tenga una firma válida y no esté expirado.
          */
         if (!jwtService.isTokenValid(refreshToken)) {
 
@@ -117,24 +161,43 @@ public class AuthService {
         }
 
         /*
-         * Extraemos el email del Refresh Token.
+         * Extraemos el subject del JWT.
+         *
+         * Ahora contiene el UUID del usuario.
          */
-        String email =
-                jwtService.extractUsername(refreshToken);
+        String userIdString =
+                jwtService.extractUsername(
+                        refreshToken
+                );
+
+        UUID userId;
+
+        try {
+
+            /*
+             * Convertimos el subject a UUID.
+             */
+            userId =
+                    UUID.fromString(userIdString);
+
+        } catch (IllegalArgumentException e) {
+
+            throw new IllegalArgumentException(
+                    "Refresh token inválido"
+            );
+        }
 
         /*
-         * Buscamos al usuario en la base de datos.
+         * Buscamos al usuario mediante su UUID.
          */
         User user =
                 userRepository
-                        .findByEmail(email)
-                        .orElseThrow();
-
-        /*
-         * Creamos UserDetails.
-         */
-        UserDetails userDetails =
-                createUserDetails(user);
+                        .findById(userId)
+                        .orElseThrow(() ->
+                                new IllegalArgumentException(
+                                        "Usuario no encontrado"
+                                )
+                        );
 
         /*
          * Generamos un nuevo Access Token.
@@ -144,23 +207,11 @@ public class AuthService {
 
         /*
          * Devolvemos el nuevo Access Token
-         * junto con el Refresh Token existente.
+         * y mantenemos el Refresh Token actual.
          */
         return new AuthResponse(
                 accessToken,
                 refreshToken
         );
     }
-    private UserDetails createUserDetails(User user) {
-
-        return org.springframework.security.core.userdetails.User
-                .withUsername(user.getEmail())
-                .password(user.getPasswordHash())
-                .authorities("USER")
-                .build();
-    }
-
-
-
-
 }
