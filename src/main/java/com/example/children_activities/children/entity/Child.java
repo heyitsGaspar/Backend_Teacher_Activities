@@ -1,5 +1,6 @@
 package com.example.children_activities.children.entity;
 
+import com.example.children_activities.auth.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -29,8 +30,13 @@ public class Child {
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
+
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
     }
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "teacher_id", nullable = false)
+    private User teacher;
 }

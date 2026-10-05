@@ -1,5 +1,6 @@
 package com.example.children_activities.auth.security;
 
+import com.example.children_activities.auth.entity.User;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
@@ -31,24 +32,35 @@ public class JwtService {
         this.refreshExpiration = refreshExpiration;
     }
 
-    public String generateAccessToken(UserDetails userDetails) {
+    /**
+     * Genera el access token utilizando el UUID del usuario
+     * como subject del JWT.
+     */
+    public String generateAccessToken(User user) {
 
         return generateToken(
-                userDetails.getUsername(),
+                user.getId().toString(),
                 accessExpiration
         );
     }
 
-    public String generateRefreshToken(UserDetails userDetails) {
+    /**
+     * Genera el refresh token utilizando el UUID del usuario
+     * como subject del JWT.
+     */
+    public String generateRefreshToken(User user) {
 
         return generateToken(
-                userDetails.getUsername(),
+                user.getId().toString(),
                 refreshExpiration
         );
     }
 
+    /**
+     * Genera un JWT utilizando el valor recibido como subject.
+     */
     private String generateToken(
-            String username,
+            String subject,
             long expiration
     ) {
 
@@ -58,19 +70,27 @@ public class JwtService {
                 new Date(now.getTime() + expiration);
 
         return Jwts.builder()
-                .subject(username)
+                .subject(subject)
                 .issuedAt(now)
                 .expiration(expirationDate)
                 .signWith(secretKey)
                 .compact();
     }
 
+    /**
+     * Obtiene el subject almacenado dentro del JWT.
+     *
+     * En nuestro caso será el UUID del usuario.
+     */
     public String extractUsername(String token) {
 
         return extractAllClaims(token)
                 .getSubject();
     }
 
+    /**
+     * Valida que el token pertenezca al usuario y no esté expirado.
+     */
     public boolean isTokenValid(
             String token,
             UserDetails userDetails
@@ -82,6 +102,9 @@ public class JwtService {
                 && !isTokenExpired(token);
     }
 
+    /**
+     * Comprueba si el JWT ya expiró.
+     */
     private boolean isTokenExpired(String token) {
 
         return extractAllClaims(token)
@@ -89,6 +112,9 @@ public class JwtService {
                 .before(new Date());
     }
 
+    /**
+     * Comprueba si el JWT tiene una firma y estructura válida.
+     */
     public boolean isTokenValid(String token) {
 
         try {
@@ -103,6 +129,9 @@ public class JwtService {
         }
     }
 
+    /**
+     * Extrae todos los claims del JWT.
+     */
     private Claims extractAllClaims(String token) {
 
         return Jwts.parser()

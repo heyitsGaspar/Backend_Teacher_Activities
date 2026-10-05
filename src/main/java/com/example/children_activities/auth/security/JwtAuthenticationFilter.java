@@ -1,30 +1,32 @@
 package com.example.children_activities.auth.security;
 
+import com.example.children_activities.auth.entity.User;
+import com.example.children_activities.auth.repository.UserRepository;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
+import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.UUID;
 
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
-    private final CustomUserDetailsService userDetailsService;
+    private final UserRepository userRepository;
 
     public JwtAuthenticationFilter(
             JwtService jwtService,
-            CustomUserDetailsService userDetailsService
+            UserRepository userRepository
     ) {
         this.jwtService = jwtService;
-        this.userDetailsService = userDetailsService;
+        this.userRepository = userRepository;
     }
 
     @Override
@@ -37,6 +39,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String authHeader =
                 request.getHeader("Authorization");
 
+        // Verificamos que exista un token Bearer.
         if (authHeader == null ||
                 !authHeader.startsWith("Bearer ")) {
 
@@ -44,36 +47,56 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return;
         }
 
+        // Extraemos el JWT eliminando "Bearer ".
         String token =
                 authHeader.substring(7);
 
-        String email;
+        String userId;
 
         try {
-            email = jwtService.extractUsername(token);
+
+            // El subject del JWT ahora contiene el UUID.
+            userId = jwtService.extractUsername(token);
+
+            // Comprobamos que el subject sea un UUID válido.
+            UUID.fromString(userId);
+
         } catch (Exception e) {
+
             filterChain.doFilter(request, response);
             return;
         }
 
-        if (email != null &&
-                SecurityContextHolder
-                        .getContext()
-                        .getAuthentication() == null) {
+        // Solo creamos la autenticación si todavía no existe.
+        if (SecurityContextHolder
+                .getContext()
+                .getAuthentication() == null) {
 
-            UserDetails userDetails =
-                    userDetailsService.loadUserByUsername(email);
+            UUID uuid = UUID.fromString(userId);
 
-            if (jwtService.isTokenValid(
-                    token,
-                    userDetails
-            )) {
+            User user = userRepository
+                    .findById(uuid)
+                    .orElse(null);
 
+            if (user != null &&
+                    jwtService.isTokenValid(token)) {
+
+                /*
+                 * IMPORTANTE:
+                 *
+                 * Utilizamos el UUID como principal.
+                 *
+                 * Esto permite que:
+                 *
+                 * authentication.getName()
+                 *
+                 * devuelva el UUID del usuario.
+                 */
                 UsernamePasswordAuthenticationToken authentication =
                         new UsernamePasswordAuthenticationToken(
-                                userDetails,
+                                userId,
                                 null,
-                                userDetails.getAuthorities()
+                                null
                         );
 
                 authentication.setDetails(

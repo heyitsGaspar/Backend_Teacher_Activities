@@ -60,10 +60,10 @@ public class AuthService {
                         .build();
 
         String accessToken =
-                jwtService.generateAccessToken(userDetails);
+                jwtService.generateAccessToken(user);
 
         String refreshToken =
-                jwtService.generateRefreshToken(userDetails);
+                jwtService.generateRefreshToken(user);
 
         return new AuthResponse(
                 accessToken,
@@ -92,10 +92,10 @@ public class AuthService {
                         .build();
 
         String accessToken =
-                jwtService.generateAccessToken(userDetails);
+                jwtService.generateAccessToken(user);
 
         String refreshToken =
-                jwtService.generateRefreshToken(userDetails);
+                jwtService.generateRefreshToken(user);
 
         return new AuthResponse(
                 accessToken,
@@ -140,7 +140,7 @@ public class AuthService {
          * Generamos un nuevo Access Token.
          */
         String accessToken =
-                jwtService.generateAccessToken(userDetails);
+                jwtService.generateAccessToken(user);
 
         /*
          * Devolvemos el nuevo Access Token
