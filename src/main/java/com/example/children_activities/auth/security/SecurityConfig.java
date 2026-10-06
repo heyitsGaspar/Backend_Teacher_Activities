@@ -105,7 +105,7 @@ public class SecurityConfig {
                                         "/api/subjects/**",
                                         "/api/activities/**",
                                         "/api/submissions/**",
-                                        "api/auth/me"
+                                        "/api/auth/me"
                                 ).authenticated()
 
                                 /*
