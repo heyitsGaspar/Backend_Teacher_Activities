@@ -4,6 +4,7 @@ import com.example.children_activities.auth.entity.User;
 import com.example.children_activities.auth.repository.UserRepository;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -36,26 +37,29 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             FilterChain filterChain
     ) throws ServletException, IOException {
 
-        String authHeader =
-                request.getHeader("Authorization");
+        /*
+         * Buscamos el accessToken dentro de las cookies.
+         *
+         * Ya no utilizamos:
+         *
+         * Authorization: Bearer <token>
+         *
+         * porque ahora el JWT se almacena
+         * en una cookie HttpOnly.
+         */
+        String token = getAccessTokenFromCookie(request);
 
-        // Verificamos que exista un token Bearer.
-        if (authHeader == null ||
-                !authHeader.startsWith("Bearer ")) {
-
+        // Si no existe la cookie, continuamos normalmente.
+        if (token == null || token.isBlank()) {
             filterChain.doFilter(request, response);
             return;
         }
-
-        // Extraemos el JWT eliminando "Bearer ".
-        String token =
-                authHeader.substring(7);
 
         String userId;
 
         try {
 
-            // El subject del JWT ahora contiene el UUID.
+            // El subject del JWT contiene el UUID del usuario.
             userId = jwtService.extractUsername(token);
 
             // Comprobamos que el subject sea un UUID válido.
@@ -63,11 +67,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         } catch (Exception e) {
 
+            // Si el token es inválido, continuamos sin autenticar.
             filterChain.doFilter(request, response);
             return;
         }
 
-        // Solo creamos la autenticación si todavía no existe.
+        /*
+         * Solo creamos la autenticación si todavía
+         * no existe una autenticación en el contexto.
+         */
         if (SecurityContextHolder
                 .getContext()
                 .getAuthentication() == null) {
@@ -78,6 +86,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     .findById(uuid)
                     .orElse(null);
 
+            /*
+             * El usuario debe existir y el JWT debe
+             * seguir siendo válido.
+             */
             if (user != null &&
                     jwtService.isTokenValid(token)) {
 
@@ -111,5 +123,33 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         filterChain.doFilter(request, response);
+    }
+
+    /**
+     * Busca la cookie accessToken dentro de la petición.
+     *
+     * @param request petición HTTP
+     * @return JWT encontrado o null si no existe
+     */
+    private String getAccessTokenFromCookie(
+            HttpServletRequest request
+    ) {
+
+        Cookie[] cookies = request.getCookies();
+
+        // La petición puede no contener cookies.
+        if (cookies == null) {
+            return null;
+        }
+
+        // Buscamos específicamente la cookie accessToken.
+        for (Cookie cookie : cookies) {
+
+            if ("accessToken".equals(cookie.getName())) {
+                return cookie.getValue();
+            }
+        }
+
+        return null;
     }
 }
