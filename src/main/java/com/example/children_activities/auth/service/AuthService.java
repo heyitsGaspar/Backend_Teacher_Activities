@@ -214,4 +214,14 @@ public class AuthService {
                 refreshToken
         );
     }
+    public User getCurrentUser(UUID userId) {
+
+        return userRepository
+                .findById(userId)
+                .orElseThrow(() ->
+                        new IllegalArgumentException(
+                                "Usuario no encontrado"
+                        )
+                );
+    }
 }

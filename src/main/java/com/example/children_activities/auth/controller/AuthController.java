@@ -3,6 +3,8 @@ package com.example.children_activities.auth.controller;
 import com.example.children_activities.auth.dto.AuthResponse;
 import com.example.children_activities.auth.dto.LoginRequest;
 import com.example.children_activities.auth.dto.RegisterRequest;
+import com.example.children_activities.auth.dto.UserMeResponse;
+import com.example.children_activities.auth.entity.User;
 import com.example.children_activities.auth.service.AuthCookieService;
 import com.example.children_activities.auth.service.AuthService;
 import jakarta.validation.Valid;
@@ -11,6 +13,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.core.Authentication;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -172,5 +176,24 @@ public class AuthController {
                 .body(
                         "Sesión cerrada correctamente"
                 );
+    }
+    @GetMapping("/me")
+    public UserMeResponse me(
+            Authentication authentication
+    ) {
+
+        UUID userId =
+                UUID.fromString(
+                        authentication.getName()
+                );
+
+        User user =
+                authService.getCurrentUser(userId);
+
+        return new UserMeResponse(
+                user.getId(),
+                user.getName(),
+                user.getEmail()
+        );
     }
 }
