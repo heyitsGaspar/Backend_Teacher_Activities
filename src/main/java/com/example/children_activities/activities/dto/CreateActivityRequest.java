@@ -17,7 +17,9 @@ public record CreateActivityRequest(
         String title,
 
         @NotNull(message = "La fecha de la actividad es obligatoria")
-        LocalDate activityDate
+        LocalDate activityDate,
+
+        Boolean activate
 
 ) {
 }

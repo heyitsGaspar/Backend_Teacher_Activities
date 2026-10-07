@@ -39,43 +39,73 @@ public class ActivityService {
      * La asignatura debe pertenecer al maestro
      * actualmente autenticado.
      */
+
     @Transactional
-    public ActivityResponse create(
-            CreateActivityRequest request
-    ) {
+    public ActivityResponse create(CreateActivityRequest request) {
 
         UUID teacherId = currentUserService.getCurrentUserId();
 
-        /*
-         * Buscamos la asignatura verificando también
-         * que pertenezca al maestro autenticado.
-         */
         Subject subject = subjectRepository
-                .findByIdAndTeacherId(
-                        request.subjectId(),
-                        teacherId
-                )
+                .findByIdAndTeacherId(request.subjectId(), teacherId)
                 .orElseThrow(() ->
-                        new SubjectNotFoundException(
-                                "Asignatura no encontrada"
-                        )
+                        new SubjectNotFoundException("Asignatura no encontrada")
                 );
 
+        boolean activate = Boolean.TRUE.equals(request.activate());
+
         /*
-         * Una actividad nueva comienza
-         * desactivada.
+         * Si la nueva actividad va a quedar activa,
+         * primero desactivamos la que estaba activa.
          */
+        if (activate) {
+            deactivateCurrent(teacherId, null);
+        }
+
         Activity activity = Activity.builder()
                 .subject(subject)
                 .title(request.title())
                 .activityDate(request.activityDate())
-                .active(false)
+                .active(activate)
                 .build();
 
-        Activity savedActivity =
-                activityRepository.save(activity);
+        return ActivityResponse.fromEntity(
+                activityRepository.save(activity)
+        );
+    }
 
-        return ActivityResponse.fromEntity(savedActivity);
+    @Transactional
+    public ActivityResponse activate(UUID id) {
+
+        UUID teacherId = currentUserService.getCurrentUserId();
+
+        Activity activity = activityRepository
+                .findByIdAndSubjectTeacherId(id, teacherId)
+                .orElseThrow(() ->
+                        new ActivityNotFoundException("Actividad no encontrada")
+                );
+
+        deactivateCurrent(teacherId, activity.getId());
+
+        activity.setActive(true);
+
+        return ActivityResponse.fromEntity(
+                activityRepository.save(activity)
+        );
+    }
+
+    /**
+     * Desactiva la actividad activa del maestro,
+     * excepto la indicada en exceptId (puede ser null).
+     */
+    private void deactivateCurrent(UUID teacherId, UUID exceptId) {
+
+        activityRepository
+                .findByActiveTrueAndSubjectTeacherId(teacherId)
+                .filter(current -> !current.getId().equals(exceptId))
+                .ifPresent(current -> {
+                    current.setActive(false);
+                    activityRepository.saveAndFlush(current);
+                });
     }
 
     /**
@@ -209,72 +239,7 @@ public class ActivityService {
         activityRepository.delete(activity);
     }
 
-    /**
-     * Activa una actividad.
-     *
-     * Primero verifica que la actividad pertenezca
-     * al maestro autenticado.
-     *
-     * Después desactiva la actividad que actualmente
-     * esté activa para ese mismo maestro.
-     */
-    @Transactional
-    public ActivityResponse activate(
-            UUID id
-    ) {
 
-        UUID teacherId =
-                currentUserService.getCurrentUserId();
-
-        /*
-         * Verificamos que la actividad pertenezca
-         * al maestro autenticado.
-         */
-        Activity activity = activityRepository
-                .findByIdAndSubjectTeacherId(
-                        id,
-                        teacherId
-                )
-                .orElseThrow(() ->
-                        new ActivityNotFoundException(
-                                "Actividad no encontrada"
-                        )
-                );
-
-        /*
-         * Buscamos únicamente la actividad activa
-         * de este maestro.
-         */
-        activityRepository
-                .findByActiveTrueAndSubjectTeacherId(
-                        teacherId
-                )
-                .ifPresent(activeActivity -> {
-
-                    /*
-                     * Si ya estaba activa la misma actividad,
-                     * no es necesario modificar otra.
-                     */
-                    if (!activeActivity.getId().equals(activity.getId())) {
-
-                        activeActivity.setActive(false);
-
-                        activityRepository.save(activeActivity);
-                    }
-                });
-
-        /*
-         * Activamos la actividad seleccionada.
-         */
-        activity.setActive(true);
-
-        Activity activatedActivity =
-                activityRepository.save(activity);
-
-        return ActivityResponse.fromEntity(
-                activatedActivity
-        );
-    }
 
     /**
      * Obtiene la actividad actualmente activa
