@@ -142,5 +142,25 @@ public class ChildService {
         return code;
     }
 
+    /**
+     * Elimina un alumno únicamente si pertenece
+     * al maestro actualmente autenticado.
+     *
+     * Si el alumno no existe o pertenece a otro maestro,
+     * se lanza ChildNotFoundException.
+     */
+    @Transactional
+    public void delete(UUID id) {
+
+        UUID teacherId = currentUserService.getCurrentUserId();
+
+        Child child = childRepository
+                .findByIdAndTeacherId(id, teacherId)
+                .orElseThrow(() ->
+                        new ChildNotFoundException("Alumno no encontrado")
+                );
+
+        childRepository.delete(child);
+    }
 
 }

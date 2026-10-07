@@ -65,4 +65,16 @@ public class ChildController {
     public ChildResponse findByCode(@PathVariable String code) {
         return childService.findByCode(code);
     }
+
+    /**
+     * Elimina un alumno.
+     *
+     * El servicio verifica que el alumno
+     * pertenezca al maestro autenticado.
+     */
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void delete(@PathVariable UUID id) {
+        childService.delete(id);
+    }
 }
