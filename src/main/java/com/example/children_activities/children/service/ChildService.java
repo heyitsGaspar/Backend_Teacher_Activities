@@ -6,6 +6,7 @@ import com.example.children_activities.children.dto.CreateChildRequest;
 import com.example.children_activities.children.entity.Child;
 import com.example.children_activities.children.repository.ChildRepository;
 import com.example.children_activities.exception.ChildNotFoundException;
+import com.example.children_activities.exception.DuplicateChildException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -34,10 +35,33 @@ public class ChildService {
     @Transactional
     public ChildResponse create(CreateChildRequest request) {
 
+        UUID teacherId = currentUserService.getCurrentUserId();
+
+        String name = request.name().trim();
+
+        /*
+         * Verificamos si ya existe un alumno con el mismo nombre
+         * perteneciente al maestro autenticado.
+         *
+         * IgnoreCase permite considerar como iguales:
+         *
+         * "Juan Pérez"
+         * "juan pérez"
+         * "JUAN PÉREZ"
+         */
+        if (childRepository.existsByNameIgnoreCaseAndTeacherId(
+                name,
+                teacherId
+        )) {
+            throw new DuplicateChildException(
+                    "Ya existe un alumno con ese nombre"
+            );
+        }
+
         String code = generateUniqueCode();
 
         Child child = Child.builder()
-                .name(request.name())
+                .name(name)
                 .code(code)
                 .teacher(currentUserService.getCurrentUser())
                 .build();
@@ -117,4 +141,6 @@ public class ChildService {
 
         return code;
     }
+
+
 }

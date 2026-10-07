@@ -16,6 +16,10 @@ public interface ChildRepository extends JpaRepository<Child, UUID> {
      * Busca un alumno por su ID asegurándose
      * de que pertenece al maestro indicado.
      */
+    boolean existsByNameIgnoreCaseAndTeacherId(
+            String name,
+            UUID teacherId
+    );
     Optional<Child> findByIdAndTeacherId(
             UUID childId,
             UUID teacherId

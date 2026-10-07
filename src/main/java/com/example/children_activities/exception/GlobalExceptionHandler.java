@@ -117,4 +117,14 @@ public class GlobalExceptionHandler {
                 ex.getMessage()
         );
     }
+    @ExceptionHandler(DuplicateChildException.class)
+    public ResponseEntity<Map<String, Object>> handleDuplicateChild(
+            DuplicateChildException ex
+    ) {
+
+        return buildErrorResponse(
+                HttpStatus.CONFLICT,
+                ex.getMessage()
+        );
+    }
 }
