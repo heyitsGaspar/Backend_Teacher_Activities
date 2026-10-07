@@ -32,7 +32,7 @@ public interface SubjectRepository extends JpaRepository<Subject, UUID> {
      * Verifica si el maestro ya tiene
      * una asignatura con ese nombre.
      */
-    boolean existsByNameAndTeacherId(
+    boolean existsByNameIgnoreCaseAndTeacherId(
             String name,
             UUID teacherId
     );

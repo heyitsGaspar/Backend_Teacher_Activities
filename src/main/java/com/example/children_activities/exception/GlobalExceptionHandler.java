@@ -127,4 +127,15 @@ public class GlobalExceptionHandler {
                 ex.getMessage()
         );
     }
+
+    @ExceptionHandler(DuplicateSubjectException.class)
+    public ResponseEntity<Map<String, Object>> handleDuplicateSubject(
+            DuplicateSubjectException ex
+    ) {
+
+        return buildErrorResponse(
+                HttpStatus.CONFLICT,
+                ex.getMessage()
+        );
+    }
 }
